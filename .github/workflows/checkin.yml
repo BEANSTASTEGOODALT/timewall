@@ -1,0 +1,32 @@
+
+name: Timewall Counter
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run check-in
+        env:
+          TIMEWALL_COOKIE: ${{ secrets.TIMEWALL_COOKIE }}
+          TIMEWALL_CSRF: ${{ secrets.TIMEWALL_CSRF }}
+        run: bash checkin.sh
+
+      - name: Save history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.jsonl
+          git diff --cached --quiet || git commit -m "Update Timewall history"
+          git push
